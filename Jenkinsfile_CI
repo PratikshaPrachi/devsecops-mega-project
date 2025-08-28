@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Git checkout') {
             steps {
-                git branch: 'dev', url: 'https://github.com/PratikshaPrachi/devsecops-mega-project.git'
+                git branch: 'docker-build-deploy', url: 'https://github.com/PratikshaPrachi/devsecops-mega-project.git'
             }
         }
         stage('Frontend Compilation'){
@@ -58,6 +58,36 @@ pipeline {
                 sh 'trivy fs . --format table -o fs-report.html'
             }
         }
+        
+        stage('Build and Deploy Backend Image'){
+            steps{
+                script{
+                    dir('api'){
+                        withDockerRegistry(credentialsId: 'docker-cred'){
+                            sh 'docker build -t pprachi773/backend:latest .'
+                            sh 'trivy image --format table -o backend-image-report.html pprachi773/backend:latest'
+                            sh 'docker push pprachi773/backend:latest'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build and Deploy Frontend Image'){
+            steps{
+                script{
+                    dir('api'){
+                        withDockerRegistry(credentialsId: 'docker-cred'){
+                            sh 'docker build -t pprachi773/frontend:latest .'
+                            sh 'trivy image --format table -o frontend-image-report.html pprachi773/frontend:latest'
+                            sh 'docker push pprachi773/frontend:latest'
+                        }
+                    }
+                }
+            }
+        }
+        
+        
         
     }
 }
